@@ -39,12 +39,12 @@ func (u User) IsAdmin() bool {
 
 }
 
-func (u User) SetPassword(password string) []byte {
+func (u *User) SetPassword(password string) {
 	encrypted, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return encrypted
+	u.Password = encrypted
 
 }
 
@@ -66,8 +66,13 @@ func init() {
 }
 
 func IsCorrectPassword(user User, password string) bool {
+
 	err := bcrypt.CompareHashAndPassword(user.Password, []byte(password))
-	return err == nil
+	if err != nil {
+		return false
+	}
+	return true
+
 }
 
 func UserExists(userName string) (User, bool) {
