@@ -2,14 +2,13 @@ package session
 
 import (
 	"fmt"
-	"holdinghands/us/web/redirects/session"
-
 	"testing"
+	"time"
 )
 
 func TestIsAdmin(t *testing.T) {
-	user := session.User{
-		Roles: []int{session.ADMIN, session.PLAYER},
+	user := User{
+		Roles: []int{ADMIN, PLAYER},
 	}
 	result := user.IsAdmin()
 	if result != true {
@@ -19,8 +18,8 @@ func TestIsAdmin(t *testing.T) {
 }
 
 func ExampleIsAdmin() {
-	user := session.User{
-		Roles: []int{session.ADMIN, session.PLAYER},
+	user := User{
+		Roles: []int{ADMIN, PLAYER},
 	}
 	fmt.Println(user.IsAdmin())
 	//Output:
@@ -28,18 +27,26 @@ func ExampleIsAdmin() {
 }
 
 func TestIsCorrectPassword(t *testing.T) {
-	user := session.User{}
+	user := User{}
 	user.SetPassword("testing")
-	result := session.IsCorrectPassword(user, "Testing")
+	result := IsCorrectPassword(user, "Testing")
 	if result != false {
 		t.Fatal("Passwords should not match: testing and Testing")
 	}
 }
 
 func ExampleIsCorrectPassword() {
-	user := session.User{}
+	user := User{}
 	user.SetPassword("samePassword")
-	fmt.Println(session.IsCorrectPassword(user, "samePassword"))
+	fmt.Println(IsCorrectPassword(user, "samePassword"))
 	//Output:
 	//true
+}
+
+func TestCleanSessions(t *testing.T) {
+	theSession := Session{
+		UserName: "test",
+		LastUsed: time.Now().Add(-2 * time.Hour),
+	}
+	SessionMap["12345"] = theSession
 }
