@@ -28,10 +28,11 @@ func ExampleIsAdmin() {
 
 func TestIsCorrectPassword(t *testing.T) {
 	user := User{}
-	user.SetPassword("testing")
-	result := IsCorrectPassword(user, "Testing")
+	user.SetPassword("Testing")
+
+	result := IsCorrectPassword(user, "testing")
 	if result != false {
-		t.Fatal("Passwords should not match: testing and Testing")
+		t.Fatal("Passwords  should not match")
 	}
 }
 
