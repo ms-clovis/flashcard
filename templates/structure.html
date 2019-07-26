@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Math Problems</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+</head>
+<body >
+
+<div class="container">
+    <section id="HEAD">
+        {{if ne .Page "AUTH"}}
+            {{template "header" .}}
+        {{end}}
+    </section>
+
+    <section id="AUTH">
+        {{if eq .Page "AUTH"}}
+            <h3 id="signMessage">
+
+                Sign In/Sign Up
+            </h3>
+            {{if .BadData}}
+                <h4 style="color:red">Email is taken or password is incorrect. Try again.</h4>
+            {{end}}
+            {{if not .LoggedIn}}
+                <h4 style="color:red">Log In with email and your password</h4>
+
+            {{end}}
+            <br>
+            <form   method="post" action="/createUser" name="newUser">
+                <div class="form-group">
+                    <label for="email">Email Address:</label>
+                    <input class="form-control" type="email" id="email" name="email" placeholder="example@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input class="form-control" type="password" id="password" name="password" placeholder="password">
+                </div>
+
+                <div class="form-group" >
+                    <label for="firstName">First Name:</label>
+                    <input class="form-control" type="text" id="firstName" name="firstName" placeholder="First Name">
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">LastName:</label>
+                    <input class="form-control" type="text" id="lastName" name="lastName" placeholder="Last Name">
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Desired Role:</label>
+                    <select class="form-control" id="role" name="role">
+                        <option value="Player">Player only</option>
+                        <option value="Admin">Administrator</option>
+                    </select>
+                </div>
+                <div >
+                    <button type="submit">Submit Info</button>
+                </div>
+
+            </form>
+        {{end}}
+    </section>
+
+    <section id="MP">
+        {{if eq .Page "MP"}}
+            {{if .TimedOut}}
+                <h3>Sorry, you took too long. Try again!</h3>
+                <br>
+            {{end}}
+            <h4>Try the following Math Problem: (you have 30 seconds)</h4>
+            <br>
+            <br>
+            <form class="form-inline" name="math" method="post" action="/checkAnswer">
+                <div class="form-group">
+                    <label for="answer">{{.Problem}}</label>
+
+
+                    <input class="form-control" id="answer" type="text" placeholder="0" name="answer">
+                </div>
+                <button  type="submit">Guess Answer</button>
+            </form>
+        {{end}}
+    </section>
+
+    <section id="SUCC">
+        {{if eq .Page "SUCC"}}
+            <br>
+            <h3>You were successful!</h3>
+
+            <br>
+            <a href="/">Try Again?</a>
+        {{end}}
+
+    </section>
+
+    <section id="ERR">
+        {{if eq .Page "ERR"}}
+            <br>
+            <h3> {{.Guess}} is not correct! Try again</h3>
+            <br>
+            <a href="/">Try again?</a>
+        {{end}}
+
+    </section>
+
+    <section id="ANS">
+        {{if eq .Page "ANS"}}
+            {{if .Problems}}
+                <ul>
+                    {{ range .Problems}}
+                        <li>{{.Problem }} {{.Answer}}</li>
+                    {{end}}
+                </ul>
+            {{end}}
+            <br>
+            <a href="/">Try Again?</a>
+        {{end}}
+
+    </section>
+
+</div>
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</body>
+</html>
