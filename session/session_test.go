@@ -2,6 +2,8 @@ package session
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -88,9 +90,38 @@ func TestUserExists(t *testing.T) {
 //
 //}
 
-//func TestSetUserRole(t *testing.T) {
-//	url.Values["role"]= "Admin"
-//	req := & http.Request{
-//		PostForm:
-//	}
-//}
+func TestSetUserRole(t *testing.T) {
+	req, err := http.NewRequest("Post", "http://localhost:8080/createUser", nil)
+	if err != nil {
+		t.Fatal("No request created")
+	}
+	req.ParseForm()
+	req.PostForm.Set("role", "Admin")
+	user := User{
+		UserName: "test",
+	}
+	SetUserRole(req, user)
+	testUser := UserMap["test"]
+	if testUser.IsAdmin() == false {
+		t.Fatal("Admin role not applied")
+	}
+
+}
+
+func TestPublishOK(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		if r.Method != "POST" {
+			t.Fatal("Method should be post", r.Method)
+
+		}
+
+		r.ParseForm()
+		topic := r.Form.Get("topic")
+		if topic != "meaningful-topic" {
+			t.Errorf("Expected request to have ‘topic=meaningful-topic’, got: ‘%s’", topic)
+		}
+	}))
+	defer ts.Close()
+
+}
