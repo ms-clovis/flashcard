@@ -30,7 +30,7 @@ type Data struct {
 
 func init() {
 	ProblemMap = make(map[string][]Problem)
-	temp = template.Must(template.ParseGlob("web/redirects/templates/*"))
+	temp = template.Must(template.ParseGlob("./templates/*"))
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
