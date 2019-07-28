@@ -128,13 +128,14 @@ func CreateUser(req *http.Request) (User, bool) {
 	if IsEmpty(user.UserName) || IsEmpty(string(user.Password)) {
 		return user, false
 	}
+	UserMap[user.UserName] = user
 	// store the user in the UserMap
-	if _, ok := UserMap[user.UserName]; ok {
-		return user, false
-
-	} else {
-		UserMap[user.UserName] = user
-	}
+	//if _, ok := UserMap[user.UserName]; !ok {
+	//	//	return user, false
+	//	//
+	//	//} else {
+	//	//	UserMap[user.UserName] = user
+	//	//}
 
 	return user, true
 

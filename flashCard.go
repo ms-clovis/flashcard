@@ -30,7 +30,8 @@ type Data struct {
 
 func init() {
 	ProblemMap = make(map[string][]Problem)
-	temp = template.Must(template.ParseGlob("./templates/*"))
+	//temp = template.Must(template.ParseGlob("./templates/*"))
+	temp = template.Must(template.ParseGlob("github.com/ms-clovis/flashcard/templates/*"))
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
@@ -213,13 +214,25 @@ func randInt(min int, maxNonInclusive int) int {
 func CreateNewUser(resp http.ResponseWriter, req *http.Request) {
 	if !session.IsLoggedIn(req) {
 
-		user, ok := session.UserExists(req.PostFormValue("email"))
-		if ok && session.IsCorrectPassword(user, req.PostFormValue("password")) {
+		user, userExists := session.UserExists(req.PostFormValue("email"))
+		if userExists && session.IsCorrectPassword(user, req.PostFormValue("password")) {
 			session.CreateSession(resp, user)
 			session.SetUserRole(req, user)
 			http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
 			return
+		} else if userExists {
+			data := Data{}
+			data.BadData = true
+
+			data.Page = "AUTH"
+			err := temp.ExecuteTemplate(resp, "structure.html", data)
+			//err :=temp.ExecuteTemplate(resp,"authenticate.html",data)
+			if err != nil {
+				log.Fatal(err)
+			}
+			return
 		}
+
 		if user, ok := session.CreateUser(req); ok {
 			session.CreateSession(resp, user)
 			http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
@@ -235,9 +248,11 @@ func CreateNewUser(resp http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			return
 		}
 	} else {
 		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
+		return
 	}
 }
 

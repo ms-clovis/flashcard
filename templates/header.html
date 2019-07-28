@@ -3,12 +3,12 @@
     <div class="row">
 {{/*        <div class="col-sm-2"></div>*/}}
         {{if .LoggedIn}}
-            <div class="col-sm-5 text-center">
+            <div class="col-sm-3">
                 <a href="/logout">Log Out</a>
             </div>
         {{end}}
         {{if .User.IsAdmin}}
-            <div class="col-sm-5 text-left">
+            <div class="col-sm-4 text-left">
                 <a href="/answers">See Answers</a>
             </div>
         {{end}}
