@@ -272,10 +272,12 @@ func Login(resp http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			return
 		}
 	} else {
 		// get a new Problem
 		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
+		return
 	}
 }
 
@@ -293,6 +295,7 @@ func Logout(resp http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	return
 }
 
 func ShowAnswers(resp http.ResponseWriter, req *http.Request) {
@@ -317,8 +320,10 @@ func ShowAnswers(resp http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		return
 	} else {
 		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
+		return
 	}
 }
 
