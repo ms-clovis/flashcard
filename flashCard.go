@@ -328,6 +328,9 @@ func ShowAnswers(resp http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	//datasource := session.MySQLDB{}
+	//datasource.InitDB("mike:mike@tcp(localhost:3306)","flashcard")
+	//datasource.SetUsers()
 	http.HandleFunc("/answers", ShowAnswers)
 	http.HandleFunc("/logout", Logout)
 	http.HandleFunc("/login", Login)
@@ -342,6 +345,11 @@ func main() {
 
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	err = session.DataSource.DB.Close()
+	if err != nil {
+		log.Println(err)
 	}
 
 }

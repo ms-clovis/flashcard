@@ -8,6 +8,24 @@ import (
 	"time"
 )
 
+func TestCreateUser(t *testing.T) {
+
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/createUser", nil)
+	if err != nil {
+		t.Fatal("No request created")
+	}
+	req.ParseForm()
+	req.PostForm.Set("email", "test")
+	req.PostForm.Set("password", "password")
+	req.PostForm.Set("role", "Admin")
+
+	if user, ok := CreateUser(req); !ok {
+		t.Error("user was not inserted")
+	} else {
+		RemoveUser(user)
+	}
+}
+
 func TestIsAdmin(t *testing.T) {
 	user := User{
 		Roles: []int{ADMIN, PLAYER},
@@ -52,9 +70,9 @@ func TestCleanSessions(t *testing.T) {
 		UserName: "test",
 		LastUsed: time.Now().Add(-2 * time.Hour),
 	}
-	SessionMap["12345"] = theSession
+	loginMaps.SessionMap["12345"] = theSession
 	CleanSessions()
-	if len(SessionMap) != 0 {
+	if len(loginMaps.SessionMap) != 0 {
 		t.Fatal("Did not Clean the session")
 	}
 }
@@ -65,9 +83,9 @@ func ExampleCleanSessions() {
 		UserName: "test",
 		LastUsed: time.Now().Add(-2 * time.Hour),
 	}
-	SessionMap["12345"] = theSession
+	loginMaps.SessionMap["12345"] = theSession
 	CleanSessions()
-	_, ok := SessionMap["12345"]
+	_, ok := loginMaps.SessionMap["12345"]
 	fmt.Println(ok)
 	//Output:
 	//false
@@ -75,7 +93,7 @@ func ExampleCleanSessions() {
 
 func TestUserExists(t *testing.T) {
 	user := User{UserName: "mike"}
-	UserMap["mike"] = user
+	loginMaps.UserMap["mike"] = user
 	_, result := UserExists("mike")
 	if result != true {
 		t.Fatal("User not found")
@@ -101,7 +119,7 @@ func TestSetUserRole(t *testing.T) {
 		UserName: "test",
 	}
 	SetUserRole(req, user)
-	testUser := UserMap["test"]
+	testUser := loginMaps.UserMap["test"]
 	if testUser.IsAdmin() == false {
 		t.Fatal("Admin role not applied")
 	}

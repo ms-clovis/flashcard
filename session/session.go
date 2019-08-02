@@ -14,6 +14,11 @@ const (
 	PLAYER
 )
 
+type LoginMaps struct {
+	SessionMap map[string]Session // sessionID to Session
+	UserMap    map[string]User    // userName to Users
+}
+
 type User struct {
 	UserName  string
 	Password  []byte
@@ -39,29 +44,34 @@ func (u User) IsAdmin() bool {
 
 }
 
-func (u *User) SetPassword(password string) {
+func EncryptPassword(password string) []byte {
 	encrypted, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
 	}
-	u.Password = encrypted
+	return encrypted
+}
+
+func (u *User) SetPassword(password string) {
+
+	u.Password = EncryptPassword(password)
 
 }
 
-var SessionMap map[string]Session // sessionID to Session
-var UserMap map[string]User       // userName to Users
+var loginMaps = LoginMaps{}
+var DataSource = MySQLDB{}
 
 func init() {
+
 	// initialize maps
-	SessionMap = make(map[string]Session)
-	UserMap = make(map[string]User)
+	loginMaps.SessionMap = make(map[string]Session)
+	loginMaps.UserMap = make(map[string]User)
 
-	//todo retrieve map values from true DB
-
-	testUser := User{UserName: "test@test.com"}
-	testUser.SetPassword("password")
-
-	UserMap[testUser.UserName] = testUser
+	DataSource.InitDB("mike:mike@tcp(localhost:3306)", "flashcard")
+	if err := DataSource.DB.Ping(); err != nil {
+		log.Fatal(err)
+	}
+	DataSource.SetUsers()
 
 }
 
@@ -76,7 +86,7 @@ func IsCorrectPassword(user User, password string) bool {
 }
 
 func UserExists(userName string) (User, bool) {
-	u, ok := UserMap[userName]
+	u, ok := loginMaps.UserMap[userName]
 	return u, ok
 }
 
@@ -89,7 +99,7 @@ func RemoveSession(resp http.ResponseWriter, req *http.Request) {
 	}
 	sessionCookie.MaxAge = -1
 	http.SetCookie(resp, sessionCookie)
-	delete(SessionMap, sessionCookie.Value)
+	delete(loginMaps.SessionMap, sessionCookie.Value)
 }
 
 func GetUserFromSession(req *http.Request) User {
@@ -98,7 +108,7 @@ func GetUserFromSession(req *http.Request) User {
 		return getEmptyUser()
 	}
 
-	return UserMap[SessionMap[sessionCookie.Value].UserName]
+	return loginMaps.UserMap[loginMaps.SessionMap[sessionCookie.Value].UserName]
 }
 
 func CreateSession(resp http.ResponseWriter, user User) {
@@ -110,7 +120,7 @@ func CreateSession(resp http.ResponseWriter, user User) {
 	}
 	// store the sessionID in the SessionMap
 	session := Session{UserName: user.UserName, LastUsed: time.Now()}
-	SessionMap[sessionCookie.Value] = session
+	loginMaps.SessionMap[sessionCookie.Value] = session
 	http.SetCookie(resp, sessionCookie)
 
 }
@@ -118,6 +128,12 @@ func CreateSession(resp http.ResponseWriter, user User) {
 func IsEmpty(val string) bool {
 
 	return strings.TrimSpace(val) == ""
+}
+
+func RemoveUser(user User) bool {
+	delete(loginMaps.UserMap, user.UserName)
+	return DataSource.DeleteUser(user)
+	//return true
 }
 
 func CreateUser(req *http.Request) (User, bool) {
@@ -128,16 +144,13 @@ func CreateUser(req *http.Request) (User, bool) {
 	if IsEmpty(user.UserName) || IsEmpty(string(user.Password)) {
 		return user, false
 	}
-	UserMap[user.UserName] = user
-	// store the user in the UserMap
-	//if _, ok := UserMap[user.UserName]; !ok {
-	//	//	return user, false
-	//	//
-	//	//} else {
-	//	//	UserMap[user.UserName] = user
-	//	//}
-
-	return user, true
+	loginMaps.UserMap[user.UserName] = user
+	userSlc := []User{user}
+	if worked := DataSource.AddUsers(userSlc); worked {
+		return user, true
+	} else {
+		return user, false
+	}
 
 }
 
@@ -152,16 +165,17 @@ func getEmptyUser() User {
 }
 
 func GetUser(req *http.Request) User {
-	var err error
+
 	user := getEmptyUser()
 	if req.Method == http.MethodPost {
 		user.UserName = req.PostFormValue("email")
 		// encrypt password
-		user.Password, err = bcrypt.GenerateFromPassword(
-			[]byte(req.PostFormValue("password")), bcrypt.DefaultCost)
-		if err != nil {
-			log.Fatal(err)
-		}
+		//user.Password, err = bcrypt.GenerateFromPassword(
+		//	[]byte(req.PostFormValue("password")), bcrypt.DefaultCost)
+		user.Password = EncryptPassword(req.PostFormValue("password"))
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
 		user.FirstName = req.PostFormValue("firstName")
 		user.LastName = req.PostFormValue("lastName")
 		SetUserRole(req, user)
@@ -175,7 +189,7 @@ func SetUserRole(req *http.Request, user User) {
 	if role == "Admin" {
 		user.Roles = append(user.Roles, ADMIN)
 	}
-	UserMap[user.UserName] = user
+	loginMaps.UserMap[user.UserName] = user
 }
 
 func IsLoggedIn(req *http.Request) bool {
@@ -185,13 +199,13 @@ func IsLoggedIn(req *http.Request) bool {
 		return false
 	}
 
-	if session, ok := SessionMap[sessionCookie.Value]; !ok {
+	if session, ok := loginMaps.SessionMap[sessionCookie.Value]; !ok {
 		return false
 	} else {
 
 		session.LastUsed = time.Now()
-		SessionMap[sessionCookie.Value] = session
-		if _, ok := UserMap[session.UserName]; !ok {
+		loginMaps.SessionMap[sessionCookie.Value] = session
+		if _, ok := loginMaps.UserMap[session.UserName]; !ok {
 			return false
 		}
 		return true
@@ -201,9 +215,9 @@ func IsLoggedIn(req *http.Request) bool {
 
 func CleanSessions() {
 
-	for k, session := range SessionMap {
+	for k, session := range loginMaps.SessionMap {
 		if session.LastUsed.Add(time.Hour).Before(time.Now()) {
-			delete(SessionMap, k)
+			delete(loginMaps.SessionMap, k)
 		}
 	}
 }
