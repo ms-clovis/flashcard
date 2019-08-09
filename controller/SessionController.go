@@ -5,9 +5,5 @@ import (
 )
 
 type SessionController struct {
-	loginMaps session.LoginMaps
-}
-
-func InitialzeMaps() {
-
+	loginMaps *session.LoginMaps
 }

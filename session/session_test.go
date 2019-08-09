@@ -2,11 +2,20 @@ package session
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 )
+
+func TestInitSession(t *testing.T) {
+	InitSession("mike:mike@tcp(localhost:3306)", "flashcard", "MYSQL")
+	err := DataSource.GetDB().Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func TestCreateUser(t *testing.T) {
 
@@ -118,9 +127,10 @@ func TestSetUserRole(t *testing.T) {
 	user := User{
 		UserName: "test",
 	}
-	SetUserRole(req, user)
-	testUser := loginMaps.UserMap["test"]
-	if testUser.IsAdmin() == false {
+	SetUserRole(req, &user)
+
+	//testUser := loginMaps.UserMap["test"]
+	if user.IsAdmin() == false {
 		t.Fatal("Admin role not applied")
 	}
 

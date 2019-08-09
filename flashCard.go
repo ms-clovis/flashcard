@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	//"holdinghands/us/github.com/ms-clovis/flashcard/model"
 	"holdinghands/us/github.com/ms-clovis/flashcard/session"
 	"html/template"
 	"log"
@@ -30,8 +31,8 @@ type Data struct {
 
 func init() {
 	ProblemMap = make(map[string][]Problem)
-	temp = template.Must(template.ParseGlob("./templates/*"))
-	//temp = template.Must(template.ParseGlob("github.com/ms-clovis/flashcard/templates/*"))
+	//temp = template.Must(template.ParseGlob("./templates/*"))
+	temp = template.Must(template.ParseGlob("github.com/ms-clovis/flashcard/templates/*"))
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
@@ -179,7 +180,7 @@ func showForm(resp http.ResponseWriter, req *http.Request) {
 	data.Problem = problem
 	setAnswerCookie(resp, answer)
 	data.User = session.GetUserFromSession(req)
-	session.SetUserRole(req, data.User)
+	//session.SetUserRole(req, &data.User)
 	slcElem := Problem{Problem: problem, Answer: answer}
 	if slc, ok := ProblemMap[data.User.UserName]; ok {
 
@@ -199,11 +200,11 @@ func showForm(resp http.ResponseWriter, req *http.Request) {
 }
 
 func setAnswerCookie(resp http.ResponseWriter, answer float64) {
-	//expire := time.Now().Add(30 * time.Second)
+	expire := time.Now().Add(60 * time.Second)
 	http.SetCookie(resp, &http.Cookie{
-		Name:  "Answer",
-		Value: fmt.Sprintf("%v", answer),
-		//MaxAge: expire.Second(),
+		Name:   "Answer",
+		Value:  fmt.Sprintf("%v", answer),
+		MaxAge: expire.Second(),
 	})
 }
 
@@ -217,7 +218,9 @@ func CreateNewUser(resp http.ResponseWriter, req *http.Request) {
 		user, userExists := session.UserExists(req.PostFormValue("email"))
 		if userExists && session.IsCorrectPassword(user, req.PostFormValue("password")) {
 			session.CreateSession(resp, user)
-			session.SetUserRole(req, user)
+			session.DataSource.SetRole(&user)
+			//session.SetUserRole(req, &user)
+
 			http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
 			return
 		} else if userExists {
@@ -328,9 +331,7 @@ func ShowAnswers(resp http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	//datasource := session.MySQLDB{}
-	//datasource.InitDB("mike:mike@tcp(localhost:3306)","flashcard")
-	//datasource.SetUsers()
+	session.InitSession("mike:mike@tcp(localhost:3306)", "flashcard", "MYSQL")
 	http.HandleFunc("/answers", ShowAnswers)
 	http.HandleFunc("/logout", Logout)
 	http.HandleFunc("/login", Login)
@@ -347,7 +348,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = session.DataSource.DB.Close()
+	err = session.DataSource.GetDB().Close()
 	if err != nil {
 		log.Println(err)
 	}

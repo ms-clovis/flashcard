@@ -35,6 +35,10 @@ func (m *MySQLDB) InitDB(dataSourceURI string, DBName string) {
 
 }
 
+func (m *MySQLDB) GetDB() *sql.DB {
+	return m.DB
+}
+
 func (m *MySQLDB) SetUsers() bool {
 	foundUsers := false
 	rows, err := m.DB.Query("Select userName,firstName,lastName,password from  users")
@@ -54,7 +58,7 @@ func (m *MySQLDB) SetUsers() bool {
 			log.Fatal(err)
 		}
 
-		//m.loginMaps.UserMap[user.UserName] = user
+		loginMaps.UserMap[user.UserName] = user
 	}
 	m.SetRoles()
 	err = rows.Close()
@@ -72,15 +76,19 @@ func (m *MySQLDB) SetRole(user *User) bool {
 	defer rows.Close()
 	var role int
 	var userName string
+
 	for rows.Next() {
 		err = rows.Scan(&userName, &role)
 		if err != nil {
 			log.Fatal(err)
 		}
-		if user, ok := loginMaps.UserMap[userName]; ok {
-			user.Roles = append(user.Roles, role)
+
+		if user2, ok := loginMaps.UserMap[userName]; ok {
+			user2.Roles = append(user2.Roles, role)
+			loginMaps.UserMap[userName] = user2
 		}
 	}
+
 	return true
 }
 
@@ -216,12 +224,16 @@ func (m *MySQLDB) GetUser(userName string) (User, bool) {
 	return user, true
 }
 func (m *MySQLDB) DeleteUser(user User) bool {
-	userDelete := "Delete from users where userName = '" + user.UserName + "'"
-	//roleDelete := "Delete from roles where userName ='" + user.UserName + "'"
-	_, err := m.DB.Exec(userDelete)
-	if err != nil {
-		log.Println(err)
-		return false
+
+	if deleted := m.DeleteUserRoles(user); deleted {
+		userDelete := "Delete from users where userName = '" + user.UserName + "'"
+
+		_, err := m.DB.Exec(userDelete)
+		if err != nil {
+			log.Fatal(err)
+			return false
+		}
 	}
-	return m.DeleteUserRoles(user)
+	return true
+
 }

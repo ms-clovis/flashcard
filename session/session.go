@@ -20,16 +20,16 @@ type LoginMaps struct {
 }
 
 type User struct {
-	UserName  string
-	Password  []byte
-	FirstName string
-	LastName  string
-	Roles     []int
+	UserName  string `json:"user_name"`
+	Password  []byte `json:"password"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Roles     []int  `json:"roles"`
 }
 
 type Session struct {
-	UserName string
-	LastUsed time.Time
+	UserName string    `json:"user_name"`
+	LastUsed time.Time `json:"last_used"`
 }
 
 //IsUser determines if the User has an admin role
@@ -59,23 +59,49 @@ func (u *User) SetPassword(password string) {
 }
 
 var loginMaps = LoginMaps{}
-var DataSource = MySQLDB{}
+var DataSource FlashCardDB
 
-func init() {
+//func init() {
+//	msdb := MySQLDB{}
+//	DataSource = & msdb
+//
+//	// initialize maps
+//	loginMaps.SessionMap = make(map[string]Session)
+//	loginMaps.UserMap = make(map[string]User)
+//
+//	DataSource.InitDB("mike:mike@tcp(localhost:3306)", "flashcard")
+//	if err := DataSource.GetDB().Ping(); err != nil {
+//		log.Fatal(err)
+//	}
+//	if hasUsers:=DataSource.SetUsers();!hasUsers{
+//		log.Fatal("empty User Map")
+//	}
+//
+//}
+
+func InitSession(datSourceURI string, DBName string, databaseType string) {
+	if databaseType == "MYSQL" {
+		msdb := MySQLDB{}
+		DataSource = &msdb
+
+	} else if databaseType == "MONGODB" {
+		//mdb := MongoDB{}
+		//DataSource = & mdb
+	}
+	DataSource.InitDB(datSourceURI, DBName)
 
 	// initialize maps
 	loginMaps.SessionMap = make(map[string]Session)
 	loginMaps.UserMap = make(map[string]User)
 
-	DataSource.InitDB("mike:mike@tcp(localhost:3306)", "flashcard")
-	if err := DataSource.DB.Ping(); err != nil {
+	if err := DataSource.GetDB().Ping(); err != nil {
 		log.Fatal(err)
 	}
 	DataSource.SetUsers()
-
 }
 
 func IsCorrectPassword(user User, password string) bool {
+	//return string(user.Password)==string(EncryptPassword(password))
 
 	err := bcrypt.CompareHashAndPassword(user.Password, []byte(password))
 	if err != nil {
@@ -133,7 +159,7 @@ func IsEmpty(val string) bool {
 func RemoveUser(user User) bool {
 	delete(loginMaps.UserMap, user.UserName)
 	return DataSource.DeleteUser(user)
-	//return true
+
 }
 
 func CreateUser(req *http.Request) (User, bool) {
@@ -178,18 +204,19 @@ func GetUser(req *http.Request) User {
 		//}
 		user.FirstName = req.PostFormValue("firstName")
 		user.LastName = req.PostFormValue("lastName")
-		SetUserRole(req, user)
+		SetUserRole(req, &user)
 
 	}
 	return user
 }
 
-func SetUserRole(req *http.Request, user User) {
+func SetUserRole(req *http.Request, user *User) {
 	role := req.PostFormValue("role")
 	if role == "Admin" {
 		user.Roles = append(user.Roles, ADMIN)
 	}
-	loginMaps.UserMap[user.UserName] = user
+
+	//loginMaps.UserMap[user.UserName] = user
 }
 
 func IsLoggedIn(req *http.Request) bool {
