@@ -31,9 +31,9 @@ type Data struct {
 
 func init() {
 	ProblemMap = make(map[string][]Problem)
-	temp = template.Must(template.ParseGlob("./templates/*"))
+	//temp = template.Must(template.ParseGlob("./templates/*"))
 	//use to run in idea easily comment out above..
-	//temp = template.Must(template.ParseGlob("github.com/ms-clovis/flashcard/templates/*"))
+	temp = template.Must(template.ParseGlob("github.com/ms-clovis/flashcard/templates/*"))
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
