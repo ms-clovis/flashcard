@@ -1,5 +1,5 @@
 # flashcard
-Demo Program for Go Web Class
+Demo Program for Go Web Class Demonstration
 
 When Using, only administrators can see the answers to the "flash" questions for them.
 
