@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-	//"holdinghands/us/github.com/ms-clovis/flashcard/model"
-	"holdinghands/us/github.com/ms-clovis/flashcard/session"
+	"github.com/ms-clovis/flashcard/session"
 	"html/template"
 	"log"
 	"math/rand"
