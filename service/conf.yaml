@@ -1,0 +1,3 @@
+datasourceuri:  "mike:mike@tcp(localhost:3306)"
+dbname:  "flashcard"
+dbtype:  "MySQL"
